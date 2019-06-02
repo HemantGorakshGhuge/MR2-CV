@@ -1,31 +1,10 @@
 import numpy as np
 import cv2 as cv
-import RPi.GPIO as gpio
-from time import sleep
 
 video_capture = cv.VideoCapture(-1)
 video_capture.set(3,640)
 video_capture.set(4,480)
 
-#pin = 12
-a=31
-b=33
-c=35
-d=37
-
-gpio.setwarnings(False)
-gpio.setmode(gpio.BOARD)
-#gpio.setup(pin,gpio.OUT)
-#pi_pwm = gpio.PWM(pin,1000)
-#pi_pwm.start(0)
-gpio.setup(a,gpio.OUT)
-gpio.setup(b,gpio.OUT)
-gpio.setup(c,gpio.OUT)
-gpio.setup(d,gpio.OUT)
-gpio.output(a,gpio.LOW)
-gpio.output(b,gpio.LOW)
-gpio.output(c,gpio.LOW)
-gpio.output(d,gpio.LOW)
 while(True):
 
     ret, frame = video_capture.read()
@@ -35,6 +14,7 @@ while(True):
     hsv = cv.cvtColor(crop_img, cv.COLOR_BGR2HSV)
     
     #calculations:
+    #red = np.uint8([[[0,0,255 ]]]) bgr
     #hsv_red = cv2.cvtColor(red,cv2.COLOR_BGR2HSV)
     lower_red = np.array([160, 50, 50])
     upper_red = np.array([180, 255, 255])
