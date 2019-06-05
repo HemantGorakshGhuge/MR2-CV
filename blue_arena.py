@@ -9,13 +9,16 @@ video_capture.set(4,480)
 video_capture.set(5,90)
 
 a=22 # colour line (red and blue)
-b=23 
+b=19 
 c=21
-d=19
+d=23
 
 e=24 # 90 degree turn
 
-l=40 # led
+# led
+green_led=11
+blue_led=13
+red_led=15
 
 gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
@@ -24,9 +27,12 @@ gpio.setup(a,gpio.OUT)
 gpio.setup(b,gpio.OUT)
 gpio.setup(c,gpio.OUT)
 gpio.setup(d,gpio.OUT)
+
 gpio.setup(e,gpio.OUT)
 
-gpio.setup(l, gpio.OUT)
+gpio.setup(green_led, gpio.OUT)
+gpio.setup(blue_led, gpio.OUT)
+gpio.setup(red_led, gpio.OUT)
 
 gpio.output(a,gpio.LOW)
 gpio.output(b,gpio.LOW)
@@ -35,7 +41,10 @@ gpio.output(d,gpio.LOW)
 
 gpio.output(e,gpio.LOW)
 
-gpio.output(l,gpio.HIGH)
+gpio.output(green_led,gpio.HIGH)
+gpio.output(blue_led,gpio.HIGH)
+gpio.output(red_led,gpio.HIGH)
+
 ctrl = 0
 flag = 0
 
@@ -124,7 +133,7 @@ while(True):
 
             if (ang > 75 and ang < 100) or (ang < -75 and ang > -100):
                 gpio.output(e,gpio.HIGH)
-                gpio.output(l,gpio.LOW)
+                gpio.output(green_led,gpio.LOW)
                 ctrl+=1
                 print('90 turn signal angle detection')
 
@@ -173,14 +182,17 @@ while(True):
             cv.drawContours(crop_img, contours_blue, -1, (0,255,255), 3)
             
             gpio.output(a, gpio.HIGH)
+            gpio.output(blue_led,gpio.LOW)
             print('blue detected area more than 15000')
 
         else:
             gpio.output(a, gpio.LOW)
+            gpio.output(blue_led,gpio.HIGH)
             print('area less than 15000(blue)')
 
     else:
         gpio.output(a, gpio.LOW)
+        gpio.output(blue_led,gpio.HIGH)
         print('length of blue contours < 0')
 
 
