@@ -15,6 +15,8 @@ d=37
 
 e=29
 
+l=40
+
 gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
 
@@ -24,6 +26,8 @@ gpio.setup(c,gpio.OUT)
 gpio.setup(d,gpio.OUT)
 gpio.setup(e,gpio.OUT)
 
+gpio.setup(l, gpio.OUT)
+
 gpio.output(a,gpio.LOW)
 gpio.output(b,gpio.LOW)
 gpio.output(c,gpio.LOW)
@@ -31,6 +35,8 @@ gpio.output(d,gpio.LOW)
 
 gpio.output(e,gpio.HIGH)
 
+gpio.output(l,gpio.HIGH)
+ctrl = 0
 while(True):
 
     start = time.time()
@@ -41,8 +47,11 @@ while(True):
 
     hsv = cv.cvtColor(crop_img, cv.COLOR_BGR2HSV)
     
-    lower_white = np.array([100, 50, 50])
-    upper_white = np.array([118, 255, 255])
+    lower_white = np.array([100, 0, 150])
+    upper_white = np.array([118, 100, 255])
+
+    #lower_blue = np.array([100, 150, 50])
+    #upper_blue = np.array([118, 255, 255])
 
     mask_white = cv.inRange(hsv, lower_white, upper_white)
     #cv.imshow('mask white', mask_white)
@@ -74,31 +83,30 @@ while(True):
         con_white = max(contours_white, key = cv.contourArea)
         area_white = cv.contourArea(con_white)
         print('area_white = ' + str(area_white))
-        
-        blackbox = cv.minAreaRect(con_white)
-        (x_min, y_min), (w_min, h_min), ang = blackbox
 
-        if ang < -45 :
-            ang = 90 + ang
+        if (area_white > 8000):
+            blackbox = cv.minAreaRect(con_white)
+            (x_min, y_min), (w_min, h_min), ang = blackbox
+
+            if ang < -45 :
+                ang = 90 + ang
           
-        if w_min < h_min and ang > 0:    
-            ang = (90-ang)*-1
+            if w_min < h_min and ang > 0:    
+                ang = (90-ang)*-1
                       
-        if w_min > h_min and ang < 0:
-            ang = 90 + ang
+            if w_min > h_min and ang < 0:
+                ang = 90 + ang
             
-        ang = int(ang)
-        print('ang = '+ str(ang))
-        cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
+            ang = int(ang)
+            print('ang = '+ str(ang))
+            cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
 
-
-
-        
-        if ang > 80 and ang < 100 or ang < -80 and ang > -100:
-            gpio.output(e,gpio.LOW)
-            print('90 turn 90 turn')
-
-        if (area_white > 900):
+            if (ang > 75 and ang < 100) or (ang < -75 and ang > -100):
+                gpio.output(e,gpio.LOW)
+                gpio.output(l,gpio.LOW)
+                ctrl+=1
+                print('90 turn signal angle detection') 
+            
             M_white = cv.moments(con_white)
             
             if M_white['m00'] == 0:
@@ -161,7 +169,7 @@ while(True):
             gpio.output(b,gpio.LOW)
             gpio.output(c,gpio.LOW)
             gpio.output(d,gpio.LOW)
-            print ('area less than 900')
+            print ('area less than 8000')
     else:
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.LOW)
@@ -175,7 +183,7 @@ while(True):
         area_red = cv.contourArea(con_red)
         print('area_red = ' + str(area_red))
 
-        if (area_red > 4000):
+        if (area_red > 12000):
             M_red = cv.moments(con_red)
 
             if M_red['m00'] == 0:
@@ -190,20 +198,22 @@ while(True):
             cv.drawContours(crop_img, contours_red, -1, (0,255,255), 3)
         
             gpio.output(a, gpio.HIGH)
-            print('red detected area more than 4000')
+            print('red detected area more than 12000')
 
         else:
             gpio.output(a, gpio.LOW)
-            print('area less than 4000 (red)')
+            print('area less than 12000 (red)')
     else:
         gpio.output(a,gpio.LOW)
         print('length of red contours < 0')
 
     cv.imshow('crop_img', crop_img)
     
+    print('ctrl = ' + str(ctrl))
+    
     end = time.time()
 
-    print("time execution" + str(end-start))
+    print("time execution " + str(end-start))
 
     if cv.waitKey(1) & 0x77 == ord('q'):
         break
