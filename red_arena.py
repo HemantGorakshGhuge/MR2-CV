@@ -8,12 +8,12 @@ video_capture.set(3,1080)
 video_capture.set(4,480)
 video_capture.set(5,90)
 
-a=12 # colour line (red and blue)
-b=3 
-c=5
-d=7
+a=22 # colour line (red and blue)
+b=23 
+c=21
+d=19
 
-e=8 # 90 degree turn
+e=24 # 90 degree turn
 
 l=40 # led
 
@@ -33,7 +33,7 @@ gpio.output(b,gpio.LOW)
 gpio.output(c,gpio.LOW)
 gpio.output(d,gpio.LOW)
 
-gpio.output(e,gpio.HIGH)
+gpio.output(e,gpio.LOW)
 
 gpio.output(l,gpio.HIGH)
 ctrl = 0
@@ -124,7 +124,7 @@ while(True):
             cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
 
             if (ang > 75 and ang < 100) or (ang < -75 and ang > -100):
-                gpio.output(e,gpio.LOW)
+                gpio.output(e,gpio.HIGH)
                 gpio.output(l,gpio.LOW)
                 ctrl+=1
                 print('90 turn signal angle detection')
@@ -160,7 +160,7 @@ while(True):
         area_red = cv.contourArea(con_red)
         print('area_red = ' + str(area_red))
 
-        if (area_red > 8000):
+        if (area_red > 15000):
             M_red = cv.moments(con_red)
 
             if M_red['m00'] == 0:
@@ -175,11 +175,11 @@ while(True):
             cv.drawContours(crop_img, contours_red, -1, (0,255,255), 3)
         
             gpio.output(a, gpio.HIGH)
-            print('red detected area more than 8000')
+            print('red detected area more than 15000')
 
         else:
             gpio.output(a, gpio.LOW)
-            print('area less than 8000 (red)')
+            print('area less than 15000 (red)')
     else:
         gpio.output(a,gpio.LOW)
         print('length of red contours < 0')
@@ -224,5 +224,6 @@ while(True):
     
     if cv.waitKey(1) & 0x77 == ord('q'):
         break
+
 
 
