@@ -75,6 +75,25 @@ while(True):
         area_white = cv.contourArea(con_white)
         print('area_white = ' + str(area_white))
         
+        blackbox = cv.minAreaRect(con_white)
+        (x_min, y_min), (w_min, h_min), ang = blackbox
+
+        if ang < -45 :
+            ang = 90 + ang
+          
+        if w_min < h_min and ang > 0:    
+            ang = (90-ang)*-1
+                      
+        if w_min > h_min and ang < 0:
+            ang = 90 + ang
+            
+        ang = int(ang)
+        print('ang = '+ str(ang))
+        cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
+
+
+
+        
         if ang > 80 and ang < 100 or ang < -80 and ang > -100:
             gpio.output(e,gpio.LOW)
             print('90 turn 90 turn')
