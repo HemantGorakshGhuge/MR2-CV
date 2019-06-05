@@ -34,9 +34,12 @@ while(True):
 
     blur = cv.GaussianBlur(gray,(5,5),1)
 
-    ret, thresh = cv.threshold(blur,155,255,cv.THRESH_BINARY)
+    ret, thresh = cv.threshold(blur,160,255,cv.THRESH_BINARY)
 
-    _, contours, _ = cv.findContours(thresh.copy(), 1, cv.CHAIN_APPROX_NONE)
+    kernel = np.ones((3,3), np.uint8)
+    white_line = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
+
+    _, contours, _ = cv.findContours(white_line.copy(), 1, cv.CHAIN_APPROX_NONE)
 
     hsv = cv.cvtColor(crop_img, cv.COLOR_BGR2HSV)
     
@@ -73,69 +76,81 @@ while(True):
 
 
     if len(contours) > 0:
-        con = max(contours, key = cv.contourArea)
-        M = cv.moments(con)
-
-        if M['m00'] == 0:
-            M['m00'] = 0.0000001;
-
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
-
-        cv.line(crop_img,(cx,0),(cx,480), (255,0,0),1)
-        cv.line(crop_img,(0,cy),(640,cy), (255,0,0),1)
-
-        cv.drawContours(crop_img, contours, -1, (0,255,0), 1)
- 
-        cx_new = (cx/640)*100
-        #pi_pwm.ChangeDutyCycle(cx_new)
-
-        print ("cx = " + str(cx))
-
-        if cx >= 0 and cx < 128: # left turn
-            #gpio.output(a,gpio.LOW)
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.HIGH)
-            print('left turn')
-
-        elif cx >= 128 and cx < 256: # slight left turn
-            #gpio.output(a,gpio.LOW)
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.HIGH)
-            gpio.output(d,gpio.LOW)
-            print('slight left turn')
         
-        elif cx >= 256 and cx < 384: # forward
-            #gpio.output(a,gpio.LOW)
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.HIGH)
-            gpio.output(d,gpio.HIGH)           
-            print('forward')
-            
-        elif cx >= 384 and cx < 512: # slight right turn
-            #gpio.output(a,gpio.LOW)
-            gpio.output(b,gpio.HIGH)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.LOW)            
-            print('slight right turn')
+        con = max(contours, key = cv.contourArea)
+        area = cv.contourArea(con)
+        print('area = ' + str(area))
+        
+        if (area > 500):
+            M = cv.moments(con)
 
-        elif cx >= 512 and cx < 640: # right turn
-            #gpio.output(a,gpio.LOW)
-            gpio.output(b,gpio.HIGH)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.HIGH)
-            print('right turn')
+            if M['m00'] == 0:
+                M['m00'] = 0.0000001;
+
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+
+            cv.line(crop_img,(cx,0),(cx,480), (255,0,0),1)
+            cv.line(crop_img,(0,cy),(640,cy), (255,0,0),1)
+
+            cv.drawContours(crop_img, contours, -1, (0,255,0), 1)
+     
+            cx_new = (cx/640)*100
+            #pi_pwm.ChangeDutyCycle(cx_new)
+
+            print ("cx = " + str(cx))
+
+            if cx >= 0 and cx < 128: # left turn
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.LOW)
+                gpio.output(c,gpio.LOW)
+                gpio.output(d,gpio.HIGH)
+                print('left turn')
+
+            elif cx >= 128 and cx < 256: # slight left turn
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.LOW)
+                gpio.output(c,gpio.HIGH)
+                gpio.output(d,gpio.LOW)
+                print('slight left turn')
+            
+            elif cx >= 256 and cx < 384: # forward
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.LOW)
+                gpio.output(c,gpio.HIGH)
+                gpio.output(d,gpio.HIGH)           
+                print('forward')
+                
+            elif cx >= 384 and cx < 512: # slight right turn
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.HIGH)
+                gpio.output(c,gpio.LOW)
+                gpio.output(d,gpio.LOW)            
+                print('slight right turn')
+
+            elif cx >= 512 and cx < 640: # right turn
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.HIGH)
+                gpio.output(c,gpio.LOW)
+                gpio.output(d,gpio.HIGH)
+                print('right turn')
+
+            else:
+                #gpio.output(a,gpio.LOW)
+                gpio.output(b,gpio.LOW)
+                gpio.output(c,gpio.LOW)
+                gpio.output(d,gpio.LOW)
+                print('0000')
 
         else:
-            #gpio.output(a,gpio.LOW)
             gpio.output(b,gpio.LOW)
             gpio.output(c,gpio.LOW)
             gpio.output(d,gpio.LOW)
-            print('0000')
-
-
+            print ('area less than 500')
     else:
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.LOW)
         print ('I don\'t see the line')
 
 
