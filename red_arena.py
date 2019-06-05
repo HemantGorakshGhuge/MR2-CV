@@ -4,8 +4,9 @@ import RPi.GPIO as gpio
 from time import sleep
 
 video_capture = cv.VideoCapture(-1)
-video_capture.set(3,640)
+video_capture.set(3,1080)
 video_capture.set(4,480)
+video_capture.set(5,90)
 
 a=31
 b=33
@@ -28,16 +29,18 @@ while(True):
 
     ret, frame = video_capture.read()
 
-    crop_img = frame[100:480, 0:640]
+    crop_img = frame[0:480, 0:1080]
 
     gray = cv.cvtColor(crop_img, cv.COLOR_BGR2GRAY)
 
     blur = cv.GaussianBlur(gray,(5,5),1)
 
-    ret, thresh = cv.threshold(blur,160,255,cv.THRESH_BINARY)
+    ret, thresh = cv.threshold(blur,165,255,cv.THRESH_BINARY)
 
     kernel = np.ones((3,3), np.uint8)
     white_line = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
+    
+    cv.imshow('white line', white_line)
 
     _, contours, _ = cv.findContours(white_line.copy(), 1, cv.CHAIN_APPROX_NONE)
 
@@ -56,6 +59,8 @@ while(True):
     
     if (mask.any()!=0):
         res = cv.bitwise_and(crop_img, crop_img, mask= mask)
+        #area_line = cv.contourArea(res)
+        #print('area_line = '+ str(area_line))
         gpio.output(a,gpio.HIGH)
         #gpio.output(b,gpio.LOW)
         #gpio.output(c,gpio.LOW)
@@ -81,8 +86,23 @@ while(True):
         area = cv.contourArea(con)
         print('area = ' + str(area))
         
-        if (area > 500):
+        if (area > 900):
             M = cv.moments(con)
+         
+        #blackbox = cv.minAreaRect(contours[0])
+        #(x_min, y_min), (w_min, h_min), ang = blackbox
+
+        #if ang < -45 :
+         #   ang = 90 + ang
+          
+        #if w_min < h_min and ang > 0:    
+         #   ang = (90-ang)*-1
+                      
+        #if w_min > h_min and ang < 0:
+         #   ang = 90 + ang
+            
+        #ang = int(ang)
+        #print('ang = '+ str(ang))
 
             if M['m00'] == 0:
                 M['m00'] = 0.0000001;
@@ -91,44 +111,44 @@ while(True):
             cy = int(M['m01']/M['m00'])
 
             cv.line(crop_img,(cx,0),(cx,480), (255,0,0),1)
-            cv.line(crop_img,(0,cy),(640,cy), (255,0,0),1)
+            cv.line(crop_img,(0,cy),(1080,cy), (255,0,0),1)
 
-            cv.drawContours(crop_img, contours, -1, (0,255,0), 1)
+            cv.drawContours(crop_img, contours, -1, (0,255,0), 2)
      
-            cx_new = (cx/640)*100
+            #cx_new = (cx/640)*100
             #pi_pwm.ChangeDutyCycle(cx_new)
 
             print ("cx = " + str(cx))
 
-            if cx >= 0 and cx < 128: # left turn
+            if cx >= 0 and cx < 301: # left turn
                 #gpio.output(a,gpio.LOW)
                 gpio.output(b,gpio.LOW)
                 gpio.output(c,gpio.LOW)
                 gpio.output(d,gpio.HIGH)
                 print('left turn')
 
-            elif cx >= 128 and cx < 256: # slight left turn
+            elif cx >= 301 and cx < 387: # slight left turn
                 #gpio.output(a,gpio.LOW)
                 gpio.output(b,gpio.LOW)
                 gpio.output(c,gpio.HIGH)
                 gpio.output(d,gpio.LOW)
                 print('slight left turn')
             
-            elif cx >= 256 and cx < 384: # forward
+            elif cx >= 387 and cx < 473: # forward
                 #gpio.output(a,gpio.LOW)
                 gpio.output(b,gpio.LOW)
                 gpio.output(c,gpio.HIGH)
                 gpio.output(d,gpio.HIGH)           
                 print('forward')
                 
-            elif cx >= 384 and cx < 512: # slight right turn
+            elif cx >= 473 and cx < 559: # slight right turn
                 #gpio.output(a,gpio.LOW)
                 gpio.output(b,gpio.HIGH)
                 gpio.output(c,gpio.LOW)
                 gpio.output(d,gpio.LOW)            
                 print('slight right turn')
 
-            elif cx >= 512 and cx < 640: # right turn
+            elif cx >= 559 and cx < 860: # right turn
                 #gpio.output(a,gpio.LOW)
                 gpio.output(b,gpio.HIGH)
                 gpio.output(c,gpio.LOW)
@@ -146,7 +166,7 @@ while(True):
             gpio.output(b,gpio.LOW)
             gpio.output(c,gpio.LOW)
             gpio.output(d,gpio.LOW)
-            print ('area less than 500')
+            print ('area less than 900')
     else:
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.LOW)
