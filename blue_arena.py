@@ -48,7 +48,7 @@ gpio.output(red_led,gpio.HIGH)
 ctrl = 0
 flag = 0
 
-lower_white = np.array([100, 0, 150])
+lower_white = np.array([100, 0, 200])
 upper_white = np.array([118, 100, 255])
 shape_white = (10,10)
     
@@ -253,4 +253,5 @@ while(True):
     
     if cv.waitKey(1) & 0x77 == ord('q'):
         break
+
 
