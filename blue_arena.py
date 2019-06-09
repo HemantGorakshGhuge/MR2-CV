@@ -205,30 +205,45 @@ while(True):
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.HIGH)
         #print('left turn')
+        gpio.output(blue_led,gpio.LOW)
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(red_led,gpio.HIGH)
         
     elif flag == 2:
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.HIGH)
         gpio.output(d,gpio.LOW)
         #print('slight left turn')
+        gpio.output(blue_led,gpio.LOW)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.HIGH)
     
     elif flag == 3:
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.HIGH)
         gpio.output(d,gpio.HIGH)           
         #print('forward')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.HIGH)
         
     elif flag == 4:
         gpio.output(b,gpio.HIGH)
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.LOW)            
         #print('slight right turn')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.LOW)
         
     elif flag == 5:
         gpio.output(b,gpio.HIGH)
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.HIGH)
         #print('right turn')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(red_led,gpio.LOW)
         
     print('ctrl = ' + str(ctrl))
     print('flag = ' + str(flag))
