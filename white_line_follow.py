@@ -1,20 +1,19 @@
 import numpy as np
 import cv2 as cv
 import RPi.GPIO as gpio
+import time
 
 video_capture = cv.VideoCapture(-1)
-video_capture.set(3,640)
+video_capture.set(3,1080)
 video_capture.set(4,480)
+video_capture.set(5,90)
 
-b=33
-c=35
-d=37
+b=19 
+c=21
+d=23
 
 gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
-#gpio.setup(pin,gpio.OUT)
-#pi_pwm = gpio.PWM(pin,1000)
-#pi_pwm.start(0)
 
 gpio.setup(b,gpio.OUT)
 gpio.setup(c,gpio.OUT)
@@ -24,85 +23,110 @@ gpio.output(b,gpio.LOW)
 gpio.output(c,gpio.LOW)
 gpio.output(d,gpio.LOW)
 
+flag = 0
+
+lower_white = np.array([100, 0, 200])
+upper_white = np.array([118, 100, 255])
+shape_white = (10,10)
+
+def find_contours(lower, upper, shape):
+
+    mask = cv.inRange(hsv, lower, upper)
+
+    kernel = np.ones(shape, np.uint8)
+    line = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+
+    _, contours, _= cv.findContours(line.copy(), 1, cv.CHAIN_APPROX_NONE)
+    
+    return(contours)
+
+def line_follow(cx):
+    
+    if cx >= 0 and cx < 301: # left turn               
+        flag = 1
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.HIGH)
+        print('left turn')
+        
+    elif cx >= 301 and cx < 387: # slight left turn        
+        flag = 2
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.LOW)
+        print('slight left turn')
+            
+    elif cx >= 387 and cx < 473: # forward       
+        flag = 3
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.HIGH)           
+        print('forward')
+                       
+    elif cx >= 473 and cx < 559: # slight right turn        
+        flag = 4
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.LOW)            
+        print('slight right turn')
+
+    elif cx >= 559 and cx < 860: # right turn
+        flag = 5
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.HIGH)
+        print('right turn')
+
+    return(flag)
+
 while(True):
+    
+    start = time.time()  
 
     ret, frame = video_capture.read()
 
-    crop_img = frame[100:480, 0:640]
+    crop_img = frame[0:480, 0:1080]
 
-    gray = cv.cvtColor(crop_img, cv.COLOR_BGR2GRAY)
-
-    blur = cv.GaussianBlur(gray,(5,5),1)
-
-    ret, thresh = cv.threshold(blur,155,255,cv.THRESH_BINARY)
-    cv.imshow('thresh', thresh)
-
-    _, contours, _ = cv.findContours(thresh.copy(), 1, cv.CHAIN_APPROX_NONE)
-
-
-    if len(contours) > 0:
-        con = max(contours, key = cv.contourArea)
-        M = cv.moments(con)
-
-        if M['m00'] == 0:
-            M['m00'] = 0.0000001;
-
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
-
-        cv.line(crop_img,(cx,0),(cx,480), (255,0,0),1)
-        cv.line(crop_img,(0,cy),(640,cy), (255,0,0),1)
-
-        cv.drawContours(crop_img, contours, -1, (0,255,0), 1)
- 
-        cx_new = (cx/640)*100
-        #pi_pwm.ChangeDutyCycle(cx_new)
-
-        print ("cx = " + str(cx))
-
-        if cx >= 0 and cx < 128: # left turn
-
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.HIGH)            
-
-        elif cx >= 128 and cx < 256: # slight left turn
-
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.HIGH)
-            gpio.output(d,gpio.LOW)            
-        
-        elif cx >= 256 and cx < 384: # forward
-
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.HIGH)
-            gpio.output(d,gpio.HIGH)            
-        
-        elif cx >= 384 and cx < 512: # slight right turn
-
-            gpio.output(b,gpio.HIGH)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.LOW)            
-
-        elif cx >= 512 and cx < 640: # right turn
-
-            gpio.output(b,gpio.HIGH)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.HIGH)            
-
-        else:
-            
-            gpio.output(b,gpio.LOW)
-            gpio.output(c,gpio.LOW)
-            gpio.output(d,gpio.LOW)            
-
-
-    else:
-        print ('I don\'t see the line')
-
-
+    hsv = cv.cvtColor(crop_img, cv.COLOR_BGR2HSV)
+      
+    contours_white = find_contours(lower_white, upper_white, shape_white)
     
+    if len(contours_white) > 0:
+        
+        con_white = max(contours_white, key = cv.contourArea)
+        area_white = cv.contourArea(con_white)
+        print('area_white = ' + str(area_white))
+
+        if (area_white > 8000):
+            
+            M_white = cv.moments(con_white)
+            
+            if M_white['m00'] == 0:
+                M_white['m00'] == 0.0000001;
+
+            cx_white = int(M_white['m10']/M_white['m00'])
+            cy_white = int(M_white['m01']/M_white['m00'])
+
+            cv.line(crop_img, (cx_white,0), (cx_white,480), (255,0,0),3)
+            cv.line(crop_img, (0,cy_white), (1080,cy_white), (255,0,0),3)
+
+            cv.drawContours(crop_img, contours_white, -1, (0,255,0), 3)
+
+            print ("cx_white = " +str(cx_white))
+            
+            flag = line_follow(cx_white)
+            
+        else:
+            print ('area less than 8000')
+    else:
+        print ('length of white contours < 0')
+
     cv.imshow('crop_img',crop_img)
+
+    print('flag = ' + str(flag))
+    end = time.time()
+
+    print("time execution " + str(end-start))
 
     if cv.waitKey(1) & 0x77 == ord('q'):
         break
