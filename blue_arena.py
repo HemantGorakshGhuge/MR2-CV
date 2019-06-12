@@ -3,6 +3,18 @@ import cv2 as cv
 import RPi.GPIO as gpio
 import time
 
+import signal
+import sys
+#import time
+import threading
+
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C!')
+    gpio.output(green_led,gpio.HIGH)
+    gpio.output(blue_led,gpio.HIGH)
+    gpio.output(red_led,gpio.HIGH)
+    sys.exit(0)
+
 video_capture = cv.VideoCapture(-1)
 video_capture.set(3,1080)
 video_capture.set(4,480)
@@ -244,14 +256,16 @@ while(True):
         gpio.output(blue_led,gpio.HIGH)
         gpio.output(green_led,gpio.HIGH)
         gpio.output(red_led,gpio.LOW)
-        
     print('ctrl = ' + str(ctrl))
     print('flag = ' + str(flag))
     end = time.time()
 
     print("time execution " + str(end-start))
     
-    if cv.waitKey(1) & 0x77 == ord('q'):
+    if cv.waitKey(1) & 0x77 == ord('q'): # if quit debugging led will be off
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(red_led,gpio.HIGH)
         break
-
-
+    
+    signal.signal(signal.SIGINT, signal_handler) # for keyboard interrupt
