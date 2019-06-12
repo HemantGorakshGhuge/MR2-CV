@@ -15,8 +15,8 @@ def signal_handler(signal, frame):
     gpio.output(red_led,gpio.HIGH)
     sys.exit(0)
 
-width = 480
-height = 360
+width = 360
+height = 200
 fps = 90
 
 video_capture = cv.VideoCapture(-1)
@@ -24,8 +24,8 @@ video_capture.set(3,width)
 video_capture.set(4,height)
 video_capture.set(5,fps)
 
-area_white_threshold = 2600
-area_blue_threshold = 5800
+area_white_threshold = 1100
+area_blue_threshold = 2000
 
 a=22 # colour line (red and blue)
 b=19 
@@ -77,20 +77,55 @@ shape_blue = (3,3)
 
 def line_follow(cx):
     
-    if cx >= 0 and cx < 168: # left turn               
+    if cx >= 0 and cx < 64: # left turn               
         flag = 1
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.HIGH)
+        #print('left turn')
+        gpio.output(blue_led,gpio.LOW)
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(red_led,gpio.HIGH)
         
-    elif cx >= 168 and cx < 216: # slight left turn        
+    elif cx >= 64 and cx < 127: # slight left turn        
         flag = 2
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.LOW)
+        #print('slight left turn')
+        gpio.output(blue_led,gpio.LOW)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.HIGH)
             
-    elif cx >= 216 and cx < 264: # forward       
+    elif cx >= 127 and cx < 191: # forward       
         flag = 3
+        gpio.output(b,gpio.LOW)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.HIGH)           
+        #print('forward')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.HIGH)
                        
-    elif cx >= 264 and cx < 312: # slight right turn        
+    elif cx >= 191 and cx < 254: # slight right turn        
         flag = 4
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.LOW)            
+        #print('slight right turn')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.LOW)
 
-    elif cx >= 312 and cx < 480: # right turn
+    elif cx >= 254 and cx < 318: # right turn
         flag = 5
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.LOW)
+        gpio.output(d,gpio.HIGH)
+        #print('right turn')
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(red_led,gpio.LOW)
 
     return(flag)
 
@@ -178,7 +213,7 @@ while(True):
             flag = line_follow(cx_white)
             
         else:
-            print ('area less than 8000')
+            print ('area less than' + str(area_white_threshold))
     else:
         print ('length of white contours < 0')
 
@@ -204,12 +239,12 @@ while(True):
             
             gpio.output(a, gpio.HIGH)
             gpio.output(blue_led,gpio.LOW)
-            print('blue detected area more than 15000')
+            print('blue detected area more than'  + str(area_blue_threshold))
 
         else:
             gpio.output(a, gpio.LOW)
             gpio.output(blue_led,gpio.HIGH)
-            print('area less than 15000(blue)')
+            print('area less than (blue)' + str(area_blue_threshold))
 
     else:
         gpio.output(a, gpio.LOW)
@@ -219,50 +254,6 @@ while(True):
 
     cv.imshow('crop_img', crop_img)
     
-    if flag == 1:
-        gpio.output(b,gpio.LOW)
-        gpio.output(c,gpio.LOW)
-        gpio.output(d,gpio.HIGH)
-        #print('left turn')
-        gpio.output(blue_led,gpio.LOW)
-        gpio.output(green_led,gpio.HIGH)
-        gpio.output(red_led,gpio.HIGH)
-        
-    elif flag == 2:
-        gpio.output(b,gpio.LOW)
-        gpio.output(c,gpio.HIGH)
-        gpio.output(d,gpio.LOW)
-        #print('slight left turn')
-        gpio.output(blue_led,gpio.LOW)
-        gpio.output(green_led,gpio.LOW)
-        gpio.output(red_led,gpio.HIGH)
-    
-    elif flag == 3:
-        gpio.output(b,gpio.LOW)
-        gpio.output(c,gpio.HIGH)
-        gpio.output(d,gpio.HIGH)           
-        #print('forward')
-        gpio.output(blue_led,gpio.HIGH)
-        gpio.output(green_led,gpio.LOW)
-        gpio.output(red_led,gpio.HIGH)
-        
-    elif flag == 4:
-        gpio.output(b,gpio.HIGH)
-        gpio.output(c,gpio.LOW)
-        gpio.output(d,gpio.LOW)            
-        #print('slight right turn')
-        gpio.output(blue_led,gpio.HIGH)
-        gpio.output(green_led,gpio.LOW)
-        gpio.output(red_led,gpio.LOW)
-        
-    elif flag == 5:
-        gpio.output(b,gpio.HIGH)
-        gpio.output(c,gpio.LOW)
-        gpio.output(d,gpio.HIGH)
-        #print('right turn')
-        gpio.output(blue_led,gpio.HIGH)
-        gpio.output(green_led,gpio.HIGH)
-        gpio.output(red_led,gpio.LOW)
     print('ctrl = ' + str(ctrl))
     print('flag = ' + str(flag))
     end = time.time()
@@ -276,3 +267,4 @@ while(True):
         break
     
     signal.signal(signal.SIGINT, signal_handler) # for keyboard interrupt
+
