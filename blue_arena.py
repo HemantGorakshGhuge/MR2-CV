@@ -15,10 +15,17 @@ def signal_handler(signal, frame):
     gpio.output(red_led,gpio.HIGH)
     sys.exit(0)
 
+width = 480
+height = 360
+fps = 90
+
 video_capture = cv.VideoCapture(-1)
-video_capture.set(3,1080)
-video_capture.set(4,480)
-video_capture.set(5,90)
+video_capture.set(3,width)
+video_capture.set(4,height)
+video_capture.set(5,fps)
+
+area_white_threshold = 2600
+area_blue_threshold = 5800
 
 a=22 # colour line (red and blue)
 b=19 
@@ -70,19 +77,19 @@ shape_blue = (3,3)
 
 def line_follow(cx):
     
-    if cx >= 0 and cx < 301: # left turn               
+    if cx >= 0 and cx < 168: # left turn               
         flag = 1
         
-    elif cx >= 301 and cx < 387: # slight left turn        
+    elif cx >= 168 and cx < 216: # slight left turn        
         flag = 2
             
-    elif cx >= 387 and cx < 473: # forward       
+    elif cx >= 216 and cx < 264: # forward       
         flag = 3
                        
-    elif cx >= 473 and cx < 559: # slight right turn        
+    elif cx >= 264 and cx < 312: # slight right turn        
         flag = 4
 
-    elif cx >= 559 and cx < 860: # right turn
+    elif cx >= 312 and cx < 480: # right turn
         flag = 5
 
     return(flag)
@@ -125,7 +132,7 @@ while(True):
     
     ret, frame = video_capture.read()
 
-    crop_img = frame[0:480, 0:1080]
+    crop_img = frame[0:height, 0:width]
 
     hsv = cv.cvtColor(crop_img, cv.COLOR_BGR2HSV)
     
@@ -139,7 +146,7 @@ while(True):
         area_white = cv.contourArea(con_white)
         print('area_white = ' + str(area_white))
 
-        if (area_white > 8000):
+        if (area_white > area_white_threshold):
             
             ang = calculate_angle(con_white)
 
@@ -161,8 +168,8 @@ while(True):
             cx_white = int(M_white['m10']/M_white['m00'])
             cy_white = int(M_white['m01']/M_white['m00'])
 
-            cv.line(crop_img, (cx_white,0), (cx_white,480), (255,0,0),3)
-            cv.line(crop_img, (0,cy_white), (1080,cy_white), (255,0,0),3)
+            cv.line(crop_img, (cx_white,0), (cx_white, height), (255,0,0),3)
+            cv.line(crop_img, (0,cy_white), (width, cy_white), (255,0,0),3)
 
             cv.drawContours(crop_img, contours_white, -1, (0,255,0), 3)
 
@@ -181,7 +188,7 @@ while(True):
         area_blue = cv.contourArea(con_blue)
         print('area_blue = ' + str(area_blue))
 
-        if (area_blue > 15000):
+        if (area_blue > area_blue_threshold):
             M_blue = cv.moments(con_blue)
 
             if M_blue['m00'] == 0:
@@ -190,8 +197,8 @@ while(True):
             cx_blue = int(M_blue['m10']/M_blue['m00'])
             cy_blue = int(M_blue['m01']/M_blue['m00'])
 
-            cv.line(crop_img, (cx_blue,0), (cx_blue,480), (0,0,200),3)
-            cv.line(crop_img, (0,cy_blue), (1080,cy_blue), (0,0,200),3)
+            cv.line(crop_img, (cx_blue,0), (cx_blue,height), (0,0,200),3)
+            cv.line(crop_img, (0,cy_blue), (width,cy_blue), (0,0,200),3)
 
             cv.drawContours(crop_img, contours_blue, -1, (0,255,255), 3)
             
