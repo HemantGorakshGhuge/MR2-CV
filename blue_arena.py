@@ -5,27 +5,30 @@ import time
 
 import signal
 import sys
-#import time
 import threading
 
-def signal_handler(signal, frame):
-    print('You pressed Ctrl+C!')
-    gpio.output(green_led,gpio.HIGH)
-    gpio.output(blue_led,gpio.HIGH)
-    gpio.output(red_led,gpio.HIGH)
-    sys.exit(0)
-
-width = 360
-height = 200
-fps = 90
+width = 320
+height = 240
+fps = 30
 
 video_capture = cv.VideoCapture(-1)
 video_capture.set(3,width)
 video_capture.set(4,height)
 video_capture.set(5,fps)
 
-area_white_threshold = 1100
-area_blue_threshold = 2000
+lower_white = np.array([100, 0, 200]) # 150 or 200
+upper_white = np.array([118, 100, 255]) # S = white and blue V = white and yellow
+shape_white = (10,10)
+    
+lower_blue = np.array([100, 150, 50])
+upper_blue = np.array([118, 255, 255])
+shape_blue = (3,3)
+
+area_white_threshold = 1200
+area_blue_threshold = 2200
+
+ctrl = 0
+flag = 0
 
 a=22 # colour line (red and blue)
 b=19 
@@ -64,65 +67,95 @@ gpio.output(green_led,gpio.HIGH)
 gpio.output(blue_led,gpio.HIGH)
 gpio.output(red_led,gpio.HIGH)
 
-ctrl = 0
-flag = 0
-
-lower_white = np.array([100, 0, 200])
-upper_white = np.array([118, 100, 255])
-shape_white = (10,10)
-    
-lower_blue = np.array([100, 150, 50])
-upper_blue = np.array([118, 255, 255])
-shape_blue = (3,3)
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C!')
+    gpio.output(green_led,gpio.HIGH)
+    gpio.output(blue_led,gpio.HIGH)
+    gpio.output(red_led,gpio.HIGH)
+    sys.exit(0)
 
 def line_follow(cx):
     
-    if cx >= 0 and cx < 64: # left turn               
+    if cx >= 0 and cx < 46:              
         flag = 1
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.HIGH)
-        #print('left turn')
+
+        ####
+
         gpio.output(blue_led,gpio.LOW)
         gpio.output(green_led,gpio.HIGH)
         gpio.output(red_led,gpio.HIGH)
         
-    elif cx >= 64 and cx < 127: # slight left turn        
+    elif cx >= 46 and cx < 92:        
         flag = 2
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.HIGH)
         gpio.output(d,gpio.LOW)
-        #print('slight left turn')
+
+        ####
+
         gpio.output(blue_led,gpio.LOW)
-        gpio.output(green_led,gpio.LOW)
+        gpio.output(green_led,gpio.HIGH)
         gpio.output(red_led,gpio.HIGH)
             
-    elif cx >= 127 and cx < 191: # forward       
+    elif cx >= 92 and cx < 137: # forward       
         flag = 3
         gpio.output(b,gpio.LOW)
         gpio.output(c,gpio.HIGH)
         gpio.output(d,gpio.HIGH)           
-        #print('forward')
-        gpio.output(blue_led,gpio.HIGH)
+
+        ####
+
+        gpio.output(blue_led,gpio.LOW)
         gpio.output(green_led,gpio.LOW)
         gpio.output(red_led,gpio.HIGH)
                        
-    elif cx >= 191 and cx < 254: # slight right turn        
+    elif cx >= 137 and cx < 183: # slight right turn        
         flag = 4
         gpio.output(b,gpio.HIGH)
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.LOW)            
-        #print('slight right turn')
+
+        ####
+
         gpio.output(blue_led,gpio.HIGH)
         gpio.output(green_led,gpio.LOW)
-        gpio.output(red_led,gpio.LOW)
+        gpio.output(red_led,gpio.HIGH)
 
-    elif cx >= 254 and cx < 318: # right turn
+    elif cx >= 183 and cx < 229:
         flag = 5
         gpio.output(b,gpio.HIGH)
         gpio.output(c,gpio.LOW)
         gpio.output(d,gpio.HIGH)
-        #print('right turn')
+
+        ####
+
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.LOW)
+        gpio.output(red_led,gpio.LOW)
+        
+    elif cx >= 229 and cx < 274:       
+        flag = 6
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.LOW)            
+
+        ####
+
+        gpio.output(blue_led,gpio.HIGH)
+        gpio.output(green_led,gpio.HIGH)
+        gpio.output(red_led,gpio.LOW)
+
+    elif cx >= 274 and cx < width:
+        flag = 7
+        gpio.output(b,gpio.HIGH)
+        gpio.output(c,gpio.HIGH)
+        gpio.output(d,gpio.HIGH)
+
+        ####
+
         gpio.output(blue_led,gpio.HIGH)
         gpio.output(green_led,gpio.HIGH)
         gpio.output(red_led,gpio.LOW)
@@ -142,26 +175,26 @@ def find_contours(lower, upper, shape):
 
 def calculate_angle(points):
             
-        blackbox = cv.minAreaRect(points)
-        #print('blackbox= '+ str(blackbox))
-        (x_min, y_min), (w_min, h_min), ang = blackbox
+    blackbox = cv.minAreaRect(points)
+    #print('blackbox= '+ str(blackbox))
+    (x_min, y_min), (w_min, h_min), ang = blackbox
 
-        if ang < -45 :
-                ang = 90 + ang
+    if ang < -45 :
+        ang = 90 + ang
           
-        if w_min < h_min and ang > 0:    
-                ang = (90-ang)*-1
+    if w_min < h_min and ang > 0:    
+        ang = (90-ang)*-1
                       
-        if w_min > h_min and ang < 0:
-                ang = 90 + ang
+    if w_min > h_min and ang < 0:
+        ang = 90 + ang
             
-        ang = int(ang)
-        print('ang = '+ str(ang))
-        cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
+    ang = int(ang)
+    print('ang = '+ str(ang))
+    cv.putText(crop_img, str(ang),(50,50), cv.FONT_HERSHEY_SIMPLEX, 2, (20, 20, 250), 4)
         
-        return(ang)
+    return(ang)
 
-while(True):
+while(video_capture.isOpened()):
 
     start = time.time()        
     
@@ -190,6 +223,7 @@ while(True):
                 gpio.output(green_led,gpio.LOW)
                 ctrl+=1
                 print('90 turn signal angle detection')
+                time.sleep(0.001)
                 
             else:
                 gpio.output(turn_90,gpio.LOW)
@@ -213,7 +247,7 @@ while(True):
             flag = line_follow(cx_white)
             
         else:
-            print ('area less than' + str(area_white_threshold))
+            print ('area less than ' + str(area_white_threshold))
     else:
         print ('length of white contours < 0')
 
@@ -239,12 +273,12 @@ while(True):
             
             gpio.output(a, gpio.HIGH)
             gpio.output(blue_led,gpio.LOW)
-            print('blue detected area more than'  + str(area_blue_threshold))
+            print('blue detected area more than '  + str(area_blue_threshold))
 
         else:
             gpio.output(a, gpio.LOW)
             gpio.output(blue_led,gpio.HIGH)
-            print('area less than (blue)' + str(area_blue_threshold))
+            print('area less than (blue) ' + str(area_blue_threshold))
 
     else:
         gpio.output(a, gpio.LOW)
